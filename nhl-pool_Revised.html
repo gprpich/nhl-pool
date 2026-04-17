@@ -453,7 +453,7 @@
 // ═══════════════════════════════════════════════════════
 // ▶ STEP 1: Paste your Google Apps Script Web App URL here
 // ═══════════════════════════════════════════════════════
-const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo5gr_Cko_X5aHz-DXtFMfQl8lG-b2cTXGG4OS_NsHi3fPtSX7TCgxZ-8ZZpFYf2LQ/exec";
 
 // ═══════════════════════════════════════════════════════
 // ▶ STEP 2: Update team names below to match the actual
@@ -621,7 +621,7 @@ async function submitPicks() {
     }))
   };
 
-  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzpJd4MYo5NybjGVZyNSfaeD0z853nYioQTsfkbD09dIzA8FYBrw_oY_gaur7PDX8H-/exec") {
+  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzo5gr_Cko_X5aHz-DXtFMfQl8lG-b2cTXGG4OS_NsHi3fPtSX7TCgxZ-8ZZpFYf2LQ/exec") {
     showStatus("error", "Setup needed: paste your Google Apps Script URL into the SCRIPT_URL variable in the code.");
     btn.disabled = false;
     btn.textContent = "Lock in my picks";
