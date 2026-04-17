@@ -298,7 +298,7 @@
 
 <script>
 // ── PASTE YOUR SCRIPT URL HERE (same as in nhl-pool.html) ──────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpJd4MYo5NybjGVZyNSfaeD0z853nYioQTsfkbD09dIzA8FYBrw_oY_gaur7PDX8H-/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo5gr_Cko_X5aHz-DXtFMfQl8lG-b2cTXGG4OS_NsHi3fPtSX7TCgxZ-8ZZpFYf2LQ/exec";
 
 // ── ROUNDS & SERIES — keep in sync with nhl-pool.html ─────────────────────
 const ROUNDS = [
@@ -482,7 +482,7 @@ async function saveResults() {
 
   const results = Object.entries(resultSelections).map(([seriesId, winner]) => ({ seriesId, winner }));
 
-  if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzo5gr_Cko_X5aHz-DXtFMfQl8lG-b2cTXGG4OS_NsHi3fPtSX7TCgxZ-8ZZpFYf2LQ/exec") {
     showSaveStatus("error", "Paste your Script URL into the SCRIPT_URL variable first.");
     btn.disabled = false; btn.textContent = "Save results to sheet";
     return;
