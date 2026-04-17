@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 NHL Playoff Pool</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW ── */
+  /* Find SCRIPT_URL in the JS section near the bottom     */
+
+  :root {
+    --ice: #e8f4f8;
+    --ice-dark: #c8dde8;
+    --rink: #0a1628;
+    --rink-mid: #112240;
+    --rink-surface: #162d4a;
+    --gold: #f0a500;
+    --gold-light: #ffc94d;
+    --red: #c8102e;
+    --white: #ffffff;
+    --muted: #7a9bb5;
+    --success: #2ecc71;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--rink);
+    color: var(--white);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(240,165,0,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(200,16,46,0.08) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+  }
+
+  .header-puck {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--white);
+  }
+
+  h1 span { color: var(--gold); }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  /* Name input */
+  .name-section {
+    background: var(--rink-mid);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .name-section label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .name-section input {
+    flex: 1;
+    min-width: 180px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .name-section input:focus { border-color: var(--gold); }
+  .name-section input::placeholder { color: var(--muted); }
+
+  /* Points tracker bar */
+  .points-tracker {
+    background: var(--rink-surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tracker-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tracker-chip {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    transition: all 0.15s;
+  }
+
+  .tracker-chip.used {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--rink);
+  }
+
+  /* Round sections */
+  .round-section { margin-bottom: 2rem; }
+
+  .round-heading {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--white);
+    padding: 0.4rem 0;
+    border-bottom: 2px solid var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .round-badge {
+    font-size: 0.7rem;
+    background: rgba(240,165,0,0.15);
+    color: var(--gold);
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 99px;
+    padding: 2px 10px;
+    letter-spacing: 0.06em;
+  }
+
+  .series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 10px;
+  }
+
+  /* Series card */
+  .series-card {
+    background: var(--rink-mid);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    transition: border-color 0.2s;
+  }
+
+  .series-card.complete {
+    border-color: rgba(240,165,0,0.5);
+  }
+
+  .series-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .matchup {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0.8rem;
+  }
+
+  .team-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.55rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .team-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .team-btn.selected {
+    background: rgba(240,165,0,0.15);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  .vs {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .points-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .pts-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-right: 2px;
+    white-space: nowrap;
+  }
+
+  .pt-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+  }
+
+  .pt-btn:hover:not(.disabled) { background: rgba(255,255,255,0.12); color: var(--white); }
+
+  .pt-btn.selected {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--rink);
+  }
+
+  .pt-btn.disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
+
+  /* Summary + Submit */
+  .submit-section {
+    background: var(--rink-mid);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .submit-heading {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 6px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    border-radius: 99px;
+    transition: width 0.3s;
+  }
+
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .progress-label span { color: var(--white); font-weight: 600; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--gold);
+    color: var(--rink);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .submit-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .status-msg {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: none;
+  }
+
+  .status-msg.success {
+    background: rgba(46,204,113,0.15);
+    border: 1px solid rgba(46,204,113,0.3);
+    color: var(--success);
+    display: block;
+  }
+
+  .status-msg.error {
+    background: rgba(200,16,46,0.15);
+    border: 1px solid rgba(200,16,46,0.3);
+    color: #ff6b7a;
+    display: block;
+  }
+
+  .warning-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 500px) {
+    .series-grid { grid-template-columns: 1fr; }
+    .pt-btn { width: 26px; height: 26px; font-size: 0.75rem; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-puck">🏒</div>
+  <h1>2025 NHL <span>Playoff</span> Pool</h1>
+  <p class="subtitle">Pick your winners · Wager your points · One shot at glory</p>
+</header>
+
+<div class="container">
+
+  <div class="name-section">
+    <label>Your name</label>
+    <input type="text" id="participant-name" placeholder="Enter your name..." maxlength="40" />
+  </div>
+
+  <div class="points-tracker">
+    <div class="tracker-label">Point tokens — each can only be used once</div>
+    <div class="chips-grid" id="tracker-chips"></div>
+  </div>
+
+  <div id="rounds-container"></div>
+
+  <div class="submit-section">
+    <div class="submit-heading">Submit your picks</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label"><span>0</span> of 15 series complete</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitPicks()">Lock in my picks</button>
+    <div class="status-msg" id="status-msg"></div>
+    <p class="warning-note">⚠ Once submitted, picks are final. Make sure everything looks right before locking in.</p>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ▶ STEP 1: Paste your Google Apps Script Web App URL here
+// ═══════════════════════════════════════════════════════
+const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+// ═══════════════════════════════════════════════════════
+// ▶ STEP 2: Update team names below to match the actual
+//   2025 NHL playoff bracket before sharing with friends
+// ═══════════════════════════════════════════════════════
+const ROUNDS = [
+  {
+    name: "First Round",
+    badge: "8 series",
+    series: [
+      { id: "r1s1", label: "Eastern — Series 1", teamA: "Buffalo", teamB: "Boston" },
+      { id: "r1s2", label: "Eastern — Series 2", teamA: "Tampa Bay", teamB: "Montreal" },
+      { id: "r1s3", label: "Eastern — Series 3", teamA: "Carolina", teamB: "Ottawa" },
+      { id: "r1s4", label: "Eastern — Series 4", teamA: "Pittsburgh", teamB: "Philadelphia" },
+      { id: "r1s5", label: "Western — Series 5", teamA: "Colorado", teamB: "Los Angeles" },
+      { id: "r1s6", label: "Western — Series 6", teamA: "Dallas", teamB: "Minnesota" },
+      { id: "r1s7", label: "Western — Series 7", teamA: "Vegas", teamB: "Utah" },
+      { id: "r1s8", label: "Western — Series 8", teamA: "Edmonton", teamB: "Anaheim" },
+    ]
+  },
+  {
+    name: "Second Round",
+    badge: "4 series",
+    series: [
+      { id: "r2s1", label: "Eastern — Series 9",  teamA: "East R1 Winner 1", teamB: "East R1 Winner 2" },
+      { id: "r2s2", label: "Eastern — Series 10", teamA: "East R1 Winner 3", teamB: "East R1 Winner 4" },
+      { id: "r2s3", label: "Western — Series 11", teamA: "West R1 Winner 1", teamB: "West R1 Winner 2" },
+      { id: "r2s4", label: "Western — Series 12", teamA: "West R1 Winner 3", teamB: "West R1 Winner 4" },
+    ]
+  },
+  {
+    name: "Conference Finals",
+    badge: "2 series",
+    series: [
+      { id: "r3s1", label: "Eastern Final — Series 13", teamA: "East R2 Winner 1", teamB: "East R2 Winner 2" },
+      { id: "r3s2", label: "Western Final — Series 14", teamA: "West R2 Winner 1", teamB: "West R2 Winner 2" },
+    ]
+  },
+  {
+    name: "Stanley Cup Final",
+    badge: "1 series",
+    series: [
+      { id: "r4s1", label: "Stanley Cup Final — Series 15", teamA: "Eastern Champion", teamB: "Western Champion" },
+    ]
+  }
+];
+
+const ALL_POINTS = Array.from({ length: 15 }, (_, i) => i + 1);
+let picks = {};
+
+function getUsedPoints() {
+  return Object.values(picks).map(p => p.points).filter(Boolean);
+}
+
+function getCompletedCount() {
+  return Object.values(picks).filter(p => p.winner && p.points).length;
+}
+
+function renderTracker() {
+  const used = getUsedPoints();
+  const el = document.getElementById("tracker-chips");
+  el.innerHTML = ALL_POINTS.map(n => `
+    <div class="tracker-chip${used.includes(n) ? " used" : ""}">${n}</div>
+  `).join("");
+}
+
+function renderRounds() {
+  const used = getUsedPoints();
+  const container = document.getElementById("rounds-container");
+  container.innerHTML = ROUNDS.map(round => {
+    const allDone = round.series.every(s => picks[s.id]?.winner && picks[s.id]?.points);
+    return `
+      <div class="round-section">
+        <div class="round-heading">
+          ${round.name}
+          <span class="round-badge">${round.badge}${allDone ? " ✓" : ""}</span>
+        </div>
+        <div class="series-grid">
+          ${round.series.map(s => renderCard(s, used)).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderCard(series, used) {
+  const pick = picks[series.id] || {};
+  const complete = pick.winner && pick.points;
+  return `
+    <div class="series-card${complete ? " complete" : ""}">
+      <div class="series-tag">${series.label}</div>
+      <div class="matchup">
+        <button class="team-btn${pick.winner === series.teamA ? " selected" : ""}"
+          onclick="pickWinner('${series.id}','${escQ(series.teamA)}')">${series.teamA}</button>
+        <div class="vs">VS</div>
+        <button class="team-btn${pick.winner === series.teamB ? " selected" : ""}"
+          onclick="pickWinner('${series.id}','${escQ(series.teamB)}')">${series.teamB}</button>
+      </div>
+      <div class="points-row">
+        <span class="pts-label">Bet:</span>
+        ${ALL_POINTS.map(n => {
+          const isSelected = pick.points === n;
+          const isUsed = used.includes(n) && !isSelected;
+          return `<button class="pt-btn${isSelected ? " selected" : ""}${isUsed ? " disabled" : ""}"
+            onclick="${isUsed ? "" : `pickPoints('${series.id}',${n})`}">${n}</button>`;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function escQ(str) { return str.replace(/'/g, "\\'"); }
+
+function updateProgress() {
+  const done = getCompletedCount();
+  const pct = (done / 15) * 100;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-label").innerHTML = `<span>${done}</span> of 15 series complete`;
+  document.getElementById("submit-btn").disabled = done < 15 || !document.getElementById("participant-name").value.trim();
+}
+
+window.pickWinner = function(id, team) {
+  if (!picks[id]) picks[id] = {};
+  picks[id].winner = team;
+  refresh();
+};
+
+window.pickPoints = function(id, pt) {
+  const used = getUsedPoints();
+  const current = picks[id]?.points;
+  if (used.includes(pt) && pt !== current) return;
+  if (!picks[id]) picks[id] = {};
+  picks[id].points = (picks[id].points === pt) ? null : pt;
+  refresh();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("participant-name").addEventListener("input", updateProgress);
+  refresh();
+});
+
+function refresh() {
+  renderTracker();
+  renderRounds();
+  updateProgress();
+}
+
+async function submitPicks() {
+  const name = document.getElementById("participant-name").value.trim();
+  if (!name) { showStatus("error", "Please enter your name."); return; }
+  if (getCompletedCount() < 15) { showStatus("error", "Please complete all 15 series picks."); return; }
+
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+
+  const allSeries = ROUNDS.flatMap(r => r.series);
+  const payload = {
+    name,
+    picks: allSeries.map(s => ({
+      seriesId: s.id,
+      label: s.label,
+      winner: picks[s.id].winner,
+      points: picks[s.id].points
+    }))
+  };
+
+  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzpJd4MYo5NybjGVZyNSfaeD0z853nYioQTsfkbD09dIzA8FYBrw_oY_gaur7PDX8H-/exec") {
+    showStatus("error", "Setup needed: paste your Google Apps Script URL into the SCRIPT_URL variable in the code.");
+    btn.disabled = false;
+    btn.textContent = "Lock in my picks";
+    return;
+  }
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (json.success) {
+      showStatus("success", "🏆 Picks locked in! Good luck in the pool.");
+      btn.textContent = "Picks submitted!";
+    } else {
+      showStatus("error", "Error: " + (json.error || "Unknown error."));
+      btn.disabled = false;
+      btn.textContent = "Lock in my picks";
+    }
+  } catch (err) {
+    showStatus("error", "Could not reach the server. Check your Script URL or try again.");
+    btn.disabled = false;
+    btn.textContent = "Lock in my picks";
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById("status-msg");
+  el.className = "status-msg " + type;
+  el.textContent = msg;
+}
+
+refresh();
+</script>
+</body>
+</html>

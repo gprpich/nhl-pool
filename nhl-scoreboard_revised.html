@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 NHL Playoff Pool — Scoreboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ice: #e8f4f8;
+    --rink: #0a1628;
+    --rink-mid: #112240;
+    --rink-surface: #162d4a;
+    --gold: #f0a500;
+    --gold-light: #ffc94d;
+    --red: #c8102e;
+    --white: #ffffff;
+    --muted: #7a9bb5;
+    --success: #2ecc71;
+    --success-bg: rgba(46,204,113,0.12);
+    --fail-bg: rgba(200,16,46,0.10);
+    --pending-bg: rgba(122,155,181,0.10);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--rink);
+    color: var(--white);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(240,165,0,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(200,16,46,0.08) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+  }
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;
+  }
+  h1 span { color: var(--gold); }
+  .subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0; }
+  .tab-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.6rem 1.2rem;
+    background: transparent; border: none; color: var(--muted); cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-btn:hover:not(.active) { color: var(--white); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Scoreboard */
+  .last-updated { font-size: 0.78rem; color: var(--muted); margin-bottom: 1rem; }
+
+  .leaderboard { display: flex; flex-direction: column; gap: 8px; }
+
+  .player-card {
+    background: var(--rink-mid);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .player-card:hover { border-color: rgba(240,165,0,0.35); }
+  .player-card.expanded { border-color: rgba(240,165,0,0.5); }
+
+  .player-card.rank-1 { border-color: rgba(240,165,0,0.6); }
+  .player-card.rank-2 { border-color: rgba(180,180,180,0.4); }
+  .player-card.rank-3 { border-color: rgba(185,115,50,0.4); }
+
+  .player-header {
+    display: flex; align-items: center; gap: 12px; padding: 1rem 1.1rem;
+  }
+
+  .rank-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem; font-weight: 800;
+    width: 36px; text-align: center; flex-shrink: 0; color: var(--muted);
+  }
+  .rank-badge.r1 { color: var(--gold); }
+  .rank-badge.r2 { color: #b0b0b0; }
+  .rank-badge.r3 { color: #cd7f4b; }
+
+  .player-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem; font-weight: 700; letter-spacing: 0.03em; flex: 1;
+  }
+
+  .score-block { text-align: right; }
+  .score-pts {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.8rem; font-weight: 800; color: var(--gold); line-height: 1;
+  }
+  .score-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .correct-badge {
+    font-size: 0.72rem; background: rgba(46,204,113,0.15);
+    color: var(--success); border: 1px solid rgba(46,204,113,0.25);
+    border-radius: 99px; padding: 2px 8px; margin-left: 8px; white-space: nowrap;
+  }
+
+  .expand-icon { color: var(--muted); font-size: 0.9rem; flex-shrink: 0; transition: transform 0.2s; }
+  .player-card.expanded .expand-icon { transform: rotate(180deg); }
+
+  /* Picks breakdown */
+  .picks-breakdown {
+    display: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 0.75rem 1.1rem 1rem;
+  }
+  .player-card.expanded .picks-breakdown { display: block; }
+
+  .breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+  }
+
+  .pick-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: var(--radius);
+    font-size: 0.82rem;
+  }
+  .pick-row.correct  { background: var(--success-bg); }
+  .pick-row.wrong    { background: var(--fail-bg); }
+  .pick-row.pending  { background: var(--pending-bg); }
+
+  .pick-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .correct  .pick-dot { background: var(--success); }
+  .wrong    .pick-dot { background: #c8102e; }
+  .pending  .pick-dot { background: var(--muted); }
+
+  .pick-series { color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
+  .pick-team   { flex: 1; font-weight: 500; color: var(--white); }
+  .pick-pts    {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem; font-weight: 700;
+  }
+  .correct .pick-pts { color: var(--success); }
+  .wrong   .pick-pts { color: rgba(200,16,46,0.7); text-decoration: line-through; }
+  .pending .pick-pts { color: var(--muted); }
+
+  .refresh-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.45rem 1rem;
+    background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius); color: var(--muted); cursor: pointer;
+    transition: all 0.15s; margin-bottom: 1rem;
+  }
+  .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--muted); font-size: 0.9rem; line-height: 1.7;
+  }
+  .empty-state strong { display: block; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem; font-weight: 700; color: var(--white); margin-bottom: 0.4rem; }
+
+  /* Admin panel */
+  .admin-login {
+    max-width: 360px; margin: 0 auto;
+    background: var(--rink-mid); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .admin-login label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.5rem;
+  }
+  .admin-login input[type=password] {
+    width: 100%; padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius); color: var(--white);
+    font-family: 'Barlow', sans-serif; font-size: 1rem; outline: none; margin-bottom: 0.8rem;
+  }
+  .admin-login input:focus { border-color: var(--gold); }
+
+  .admin-panel { display: none; }
+
+  .round-section { margin-bottom: 2rem; }
+  .round-heading {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+    border-bottom: 2px solid var(--gold); padding-bottom: 0.3rem; margin-bottom: 0.8rem;
+  }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 8px;
+  }
+  .result-card {
+    background: var(--rink-mid); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 0.8rem 1rem;
+  }
+  .result-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .result-teams { display: flex; gap: 6px; }
+  .result-btn {
+    flex: 1; padding: 0.5rem 0.4rem;
+    background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius); color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+    cursor: pointer; text-align: center; transition: all 0.15s; line-height: 1.2;
+  }
+  .result-btn:hover { background: rgba(255,255,255,0.1); }
+  .result-btn.selected { background: rgba(46,204,113,0.2); border-color: var(--success); color: #2ecc71; }
+
+  .save-btn {
+    width: 100%; padding: 0.85rem;
+    background: var(--gold); color: var(--rink);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    border: none; border-radius: var(--radius); cursor: pointer; margin-top: 1rem;
+    transition: all 0.15s;
+  }
+  .save-btn:hover { background: var(--gold-light); }
+  .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .status-msg {
+    margin-top: 0.8rem; padding: 0.7rem 1rem;
+    border-radius: var(--radius); font-size: 0.88rem; display: none;
+  }
+  .status-msg.success { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3); color: var(--success); display: block; }
+  .status-msg.error   { background: rgba(200,16,46,0.15);  border: 1px solid rgba(200,16,46,0.3);  color: #ff6b7a; display: block; }
+
+  @media (max-width: 500px) {
+    .breakdown-grid { grid-template-columns: 1fr; }
+    .results-grid   { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="font-size:1.8rem;margin-bottom:0.4rem">🏆</div>
+  <h1>2025 NHL <span>Playoff</span> Pool</h1>
+  <p class="subtitle">Live Scoreboard</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('scoreboard')">Scoreboard</button>
+    <button class="tab-btn" onclick="switchTab('admin')">Admin</button>
+  </div>
+
+  <!-- ── SCOREBOARD TAB ─────────────────────────────── -->
+  <div class="tab-panel active" id="tab-scoreboard">
+    <button class="refresh-btn" onclick="loadScoreboard()">↻ Refresh scores</button>
+    <div class="last-updated" id="last-updated"></div>
+    <div class="leaderboard" id="leaderboard">
+      <div class="empty-state"><strong>Loading...</strong>Fetching scores from the sheet.</div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN TAB ──────────────────────────────────── -->
+  <div class="tab-panel" id="tab-admin">
+    <div class="admin-login" id="admin-login-box">
+      <label>Admin password</label>
+      <input type="password" id="admin-pw" placeholder="Enter password..." />
+      <button class="save-btn" onclick="adminLogin()">Unlock admin panel</button>
+      <div class="status-msg" id="login-status"></div>
+    </div>
+
+    <div class="admin-panel" id="admin-panel">
+      <div id="results-rounds"></div>
+      <button class="save-btn" id="save-results-btn" onclick="saveResults()">Save results to sheet</button>
+      <div class="status-msg" id="save-status"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── PASTE YOUR SCRIPT URL HERE (same as in nhl-pool.html) ──────────────────
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpJd4MYo5NybjGVZyNSfaeD0z853nYioQTsfkbD09dIzA8FYBrw_oY_gaur7PDX8H-/exec";
+
+// ── ROUNDS & SERIES — keep in sync with nhl-pool.html ─────────────────────
+const ROUNDS = [
+  {
+    name: "First Round",
+    series: [
+      { id: "r1s1", label: "Eastern — Series 1",  teamA: "Buffalo", teamB: "Boston" },
+      { id: "r1s2", label: "Eastern — Series 2",  teamA: "Tampa Bay", teamB: "Montreal" },
+      { id: "r1s3", label: "Eastern — Series 3",  teamA: "Carolina", teamB: "Ottawa" },
+      { id: "r1s4", label: "Eastern — Series 4",  teamA: "Pittsburgh", teamB: "Philadelphia" },
+      { id: "r1s5", label: "Western — Series 5",  teamA: "Colorado", teamB: "Los Angeles" },
+      { id: "r1s6", label: "Western — Series 6",  teamA: "Dallas", teamB: "Minnesota" },
+      { id: "r1s7", label: "Western — Series 7",  teamA: "Vegas", teamB: "Utah" },
+      { id: "r1s8", label: "Western — Series 8",  teamA: "Edmonton", teamB: "Anaheim" },
+    ]
+  },
+  {
+    name: "Second Round",
+    series: [
+      { id: "r2s1", label: "Eastern — Series 9",   teamA: "East R1 Winner 1", teamB: "East R1 Winner 2" },
+      { id: "r2s2", label: "Eastern — Series 10",  teamA: "East R1 Winner 3", teamB: "East R1 Winner 4" },
+      { id: "r2s3", label: "Western — Series 11",  teamA: "West R1 Winner 1", teamB: "West R1 Winner 2" },
+      { id: "r2s4", label: "Western — Series 12",  teamA: "West R1 Winner 3", teamB: "West R1 Winner 4" },
+    ]
+  },
+  {
+    name: "Conference Finals",
+    series: [
+      { id: "r3s1", label: "Eastern Final — Series 13", teamA: "East R2 Winner 1", teamB: "East R2 Winner 2" },
+      { id: "r3s2", label: "Western Final — Series 14", teamA: "West R2 Winner 1", teamB: "West R2 Winner 2" },
+    ]
+  },
+  {
+    name: "Stanley Cup Final",
+    series: [
+      { id: "r4s1", label: "Stanley Cup Final — Series 15", teamA: "Eastern Champion", teamB: "Western Champion" },
+    ]
+  }
+];
+
+const SERIES_MAP = {};
+ROUNDS.forEach(r => r.series.forEach(s => { SERIES_MAP[s.id] = s; }));
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b, i) => {
+    b.classList.toggle("active", (i === 0 && tab === "scoreboard") || (i === 1 && tab === "admin"));
+  });
+  document.getElementById("tab-scoreboard").classList.toggle("active", tab === "scoreboard");
+  document.getElementById("tab-admin").classList.toggle("active", tab === "admin");
+}
+
+// ── SCOREBOARD ─────────────────────────────────────────────────────────────
+
+async function loadScoreboard() {
+  const lb = document.getElementById("leaderboard");
+  lb.innerHTML = '<div class="empty-state"><strong>Loading...</strong></div>';
+
+  if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    lb.innerHTML = '<div class="empty-state"><strong>Setup needed</strong>Paste your Script URL into SCRIPT_URL in the code.</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getScoreboard`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    renderScoreboard(json.scoreboard, json.results);
+    document.getElementById("last-updated").textContent =
+      "Last refreshed: " + new Date().toLocaleTimeString();
+  } catch (err) {
+    lb.innerHTML = `<div class="empty-state"><strong>Could not load scores</strong>${err.message}</div>`;
+  }
+}
+
+function renderScoreboard(scoreboard, results) {
+  const lb = document.getElementById("leaderboard");
+  if (!scoreboard || scoreboard.length === 0) {
+    lb.innerHTML = '<div class="empty-state"><strong>No picks yet</strong>Share the pool link with your friends to get started.</div>';
+    return;
+  }
+
+  lb.innerHTML = scoreboard.map((player, idx) => {
+    const rank = idx + 1;
+    const rankClass = rank <= 3 ? `r${rank}` : "";
+    const cardClass = rank <= 3 ? `rank-${rank}` : "";
+
+    const decidedSeries = player.seriesScores.filter(s => s.decided);
+    const correctCount = player.seriesScores.filter(s => s.correct).length;
+
+    const breakdown = player.seriesScores.map(s => {
+      const meta = SERIES_MAP[s.seriesId] || { label: s.seriesId };
+      const stateClass = !s.decided ? "pending" : s.correct ? "correct" : "wrong";
+      const ptsDisplay = s.decided
+        ? (s.correct ? `+${s.points}` : `0`)
+        : `${s.points}?`;
+      return `
+        <div class="pick-row ${stateClass}">
+          <div class="pick-dot"></div>
+          <span class="pick-series">${meta.label.split("—")[0].trim()}</span>
+          <span class="pick-team">${s.picked || "—"}</span>
+          <span class="pick-pts">${ptsDisplay}</span>
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="player-card ${cardClass}" id="card-${idx}" onclick="toggleCard(${idx})">
+        <div class="player-header">
+          <div class="rank-badge ${rankClass}">${rank}</div>
+          <div class="player-name">
+            ${escHtml(player.name)}
+            ${decidedSeries.length > 0 ? `<span class="correct-badge">${correctCount}/${decidedSeries.length} correct</span>` : ""}
+          </div>
+          <div class="score-block">
+            <div class="score-pts">${player.totalEarned}</div>
+            <div class="score-label">pts earned</div>
+          </div>
+          <div class="expand-icon">▾</div>
+        </div>
+        <div class="picks-breakdown">
+          <div class="breakdown-grid">${breakdown}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function toggleCard(idx) {
+  document.getElementById(`card-${idx}`).classList.toggle("expanded");
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+
+let adminPassword = "";
+
+function adminLogin() {
+  const pw = document.getElementById("admin-pw").value.trim();
+  if (!pw) return;
+  adminPassword = pw;
+  document.getElementById("admin-login-box").style.display = "none";
+  document.getElementById("admin-panel").style.display = "block";
+  renderResultsForm();
+}
+
+let resultSelections = {}; // seriesId → winner team name
+
+function renderResultsForm() {
+  const container = document.getElementById("results-rounds");
+  container.innerHTML = ROUNDS.map(round => `
+    <div class="round-section">
+      <div class="round-heading">${round.name}</div>
+      <div class="results-grid">
+        ${round.series.map(s => `
+          <div class="result-card">
+            <div class="result-label">${s.label}</div>
+            <div class="result-teams">
+              <button class="result-btn" id="rb-${s.id}-a"
+                onclick="selectResult('${s.id}','${escQ(s.teamA)}','${escQ(s.teamB)}')">${s.teamA}</button>
+              <button class="result-btn" id="rb-${s.id}-b"
+                onclick="selectResult('${s.id}','${escQ(s.teamB)}','${escQ(s.teamA)}')">${s.teamB}</button>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function selectResult(seriesId, winner, other) {
+  resultSelections[seriesId] = winner;
+  const series = SERIES_MAP[seriesId];
+  const btnA = document.getElementById(`rb-${seriesId}-a`);
+  const btnB = document.getElementById(`rb-${seriesId}-b`);
+  if (!btnA || !btnB) return;
+  const isA = winner === series.teamA;
+  btnA.classList.toggle("selected", isA);
+  btnB.classList.toggle("selected", !isA);
+}
+
+async function saveResults() {
+  const btn = document.getElementById("save-results-btn");
+  btn.disabled = true; btn.textContent = "Saving...";
+
+  const results = Object.entries(resultSelections).map(([seriesId, winner]) => ({ seriesId, winner }));
+
+  if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    showSaveStatus("error", "Paste your Script URL into the SCRIPT_URL variable first.");
+    btn.disabled = false; btn.textContent = "Save results to sheet";
+    return;
+  }
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "saveResults", password: adminPassword, results })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showSaveStatus("success", "Results saved! Switch to the Scoreboard tab and hit Refresh.");
+    } else {
+      showSaveStatus("error", json.error || "Unknown error.");
+    }
+  } catch (err) {
+    showSaveStatus("error", "Network error: " + err.message);
+  }
+
+  btn.disabled = false; btn.textContent = "Save results to sheet";
+}
+
+function showSaveStatus(type, msg) {
+  const el = document.getElementById("save-status");
+  el.className = "status-msg " + type;
+  el.textContent = msg;
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+
+function escHtml(str) {
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escQ(str) { return String(str).replace(/'/g,"\\'"); }
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+
+loadScoreboard();
+</script>
+</body>
+</html>
