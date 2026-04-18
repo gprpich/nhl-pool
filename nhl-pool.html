@@ -371,7 +371,7 @@ async function submitRound() {
   const name = document.getElementById("participant-name").value.trim();
   if (!name) { showStatus("error", "Please enter your name."); return; }
 
-  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzomlRugJ2QZlAUgOKu0DHJdgk-OVzu7KTRas78w4AHVIUQB-RALLkY0RfxUkKbPLua/exec") {
+  if (SCRIPT_URL === "YOUR GOOGLE SHEET") {
     showStatus("error", "Setup needed: paste your Google Apps Script URL into the SCRIPT_URL variable.");
     return;
   }
