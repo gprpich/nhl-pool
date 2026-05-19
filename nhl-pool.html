@@ -148,7 +148,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ▶ STEP 1: Paste your Google Apps Script Web App URL here
 // ─────────────────────────────────────────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzomlRugJ2QZlAUgOKu0DHJdgk-OVzu7KTRas78w4AHVIUQB-RALLkY0RfxUkKbPLua/exec";
+const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ▶ STEP 2: Update team names to match the actual 2025 NHL playoff bracket.
@@ -159,23 +159,23 @@ const ROUNDS = {
   r1: {
     name: "First Round", badge: "8 series",
     series: [
-      { id: "r1s1", label: "Eastern — Series 1", teamA: "Sabres", teamB: "Bruins" },
-      { id: "r1s2", label: "Eastern — Series 2", teamA: "Lightning", teamB: "Canadiens" },
-      { id: "r1s3", label: "Eastern — Series 3", teamA: "Pens", teamB: "Flyers" },
-      { id: "r1s4", label: "Eastern — Series 4", teamA: "Canes", teamB: "Sens" },
-      { id: "r1s5", label: "Western — Series 5", teamA: "Avs", teamB: "Kings" },
-      { id: "r1s6", label: "Western — Series 6", teamA: "Stars", teamB: "Wild" },
-      { id: "r1s7", label: "Western — Series 7", teamA: "Knights", teamB: "Mammoth" },
-      { id: "r1s8", label: "Western — Series 8", teamA: "Oilers", teamB: "Ducks" },
+      { id: "r1s1", label: "Eastern — Series 1", teamA: "Team A1", teamB: "Team A2" },
+      { id: "r1s2", label: "Eastern — Series 2", teamA: "Team B1", teamB: "Team B2" },
+      { id: "r1s3", label: "Eastern — Series 3", teamA: "Team C1", teamB: "Team C2" },
+      { id: "r1s4", label: "Eastern — Series 4", teamA: "Team D1", teamB: "Team D2" },
+      { id: "r1s5", label: "Western — Series 5", teamA: "Team E1", teamB: "Team E2" },
+      { id: "r1s6", label: "Western — Series 6", teamA: "Team F1", teamB: "Team F2" },
+      { id: "r1s7", label: "Western — Series 7", teamA: "Team G1", teamB: "Team G2" },
+      { id: "r1s8", label: "Western — Series 8", teamA: "Team H1", teamB: "Team H2" },
     ]
   },
   r2: {
     name: "Second Round", badge: "4 series",
     series: [
-      { id: "r2s1", label: "Eastern — Series 9",  teamA: "Sabres", teamB: "Canadiens" },
-      { id: "r2s2", label: "Eastern — Series 10", teamA: "Canes", teamB: "Flyers" },
-      { id: "r2s3", label: "Western — Series 11", teamA: "Avs", teamB: "Wild" },
-      { id: "r2s4", label: "Western — Series 12", teamA: "Knights", teamB: "Ducks" },
+      { id: "r2s1", label: "Eastern — Series 9",  teamA: "East R1 Winner 1", teamB: "East R1 Winner 2" },
+      { id: "r2s2", label: "Eastern — Series 10", teamA: "East R1 Winner 3", teamB: "East R1 Winner 4" },
+      { id: "r2s3", label: "Western — Series 11", teamA: "West R1 Winner 1", teamB: "West R1 Winner 2" },
+      { id: "r2s4", label: "Western — Series 12", teamA: "West R1 Winner 3", teamB: "West R1 Winner 4" },
     ]
   },
   r3: {
